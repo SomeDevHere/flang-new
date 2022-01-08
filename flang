@@ -1,0 +1,135 @@
+#! /usr/bin/env python3
+
+import sys
+#include sh
+#include flags
+#include tmp
+#include compat
+
+
+default_triple = "@default-target-triple@"
+
+driver = "@flang-new-path@"
+clang = "@clang-path@"
+llc = "@llc-path@"
+opt = "@opt-path@"
+llvm_nm = "@llvm-nm-path@"
+llvm_objcopy = "@llvm-objcopy-path@"
+
+spawn = Spawn_Manager
+
+args = ParseArg(sys.argv)
+
+if args.hasFlag("--help"):
+    spawn.call([driver, '--help'])
+    print("")
+    print("  --target=<value>        Generate code for the given target")
+    spawn.exit(0)
+
+if args.hasFlag("-E") or args.hasFlag("--version"):
+    spawn.execv([driver] + sys.argv[1:])
+
+if not len(args.getInputFiles(INPUT_ENDINGS)):
+    if args.hasFlag("-v"):
+        spawn.execv([driver, '-v'])
+    print(sys.argv[0]+": \033[91merror:\033[0m \033[1mno input files\033[0m", file=sys.stderr)
+    spawn.exit(1)
+
+if args.hasFlag("-v"):
+    spawn.run_verbose()
+
+opt_level = "2"
+if args.hasFlag("-O0", True):
+    opt_level = "0"
+if args.hasFlag("-O1", True):
+    opt_level = "1"
+if args.hasFlag("-O2", True):
+    opt_level = "2"
+if args.hasFlag("-O3", True):
+    opt_level = "3"
+if args.hasFlag("-Os", True):
+    opt_level = "s"
+if args.hasFlag("-Oz", True):
+    opt_level = "z"
+
+outputFile = args.getOpt("-o", True)
+
+toObjectFile = args.hasFlag("-c", True)
+
+#compile only
+
+if toObjectFile:
+    if len(args.getInputFiles(C_ENDINGS)):
+        print("C files are currently not supported")
+    
+    if len(args.getInputFiles(CXX_ENDINGS)):
+        print("C++ files are currently not supported")
+
+    if len(args.getInputFiles(OBJC_ENDINGS)):
+        print("Objective-C files are currently not supported")
+
+    if len(args.getInputFiles(OBJCXX_ENDINGS)):
+        print("Objective-C++ files are currently not supported")
+    
+    isPIC = @fpic-default@
+    if args.hasFlag("-fno-pic", True) and not (
+            args.hasFlag("-fpic", True) or args.hasFlag("-fPIC", True)):
+        isPIC = False
+    args.hasFlag("-fpic", True)
+    args.hasFlag("-fPIC", True)
+    args.hasFlag("-g", True) # flang-new currently cannot produce debug info
+    target = args.getOpt("-target", True)
+    if target is None:
+        target = args.getDef("--target", True)
+    if target is None and len(default_triple):
+        target = default_triple
+
+    leading_underscore = not args.hasFlag("-fno-leading-underscore", True)
+    
+    def modObjFile(path, out):
+        if target is None and not isPIC:
+            return spawn.create([driver, '-o', out] + args.get())
+        cmdid = spawn.create([driver] + args.get() + [path, '-c', '-Xflang', '-emit-llvm', '-o', '/dev/fd/1'])
+        if not opt_level == '0':
+            spawn.append(cmdid, [opt, '-', '-O'+opt_level])
+        llcFlags = []
+        if isPIC:
+            llcFlags.append('-relocation-model=pic')
+        if not target is None:
+            llcFlags.append("-mtriple="+target)
+        spawn.append(cmdid, [llc] + llcFlags + ['-o', out, '-filetype=obj', '-'])
+        return cmdid
+    
+    def replaceSym(path, out):
+        cmdid = modObjFile(path, out)
+        def editSym():
+            editpath = mktmp()
+            symbols = spawn.stdout([llvm_nm, '-j', out]).split("\n")
+            editfile = open(editpath, 'w')
+            writeEdits(symbols, editfile, leading_underscore)
+            spawn.call([llvm_objcopy, '--redefine-syms', editpath, out])
+            rmtmp(editpath)
+        spawn.ondone(cmdid, editSym)
+    
+    if isPIC or not target is None:
+        if outputFile is None:
+            for x in args.getInputFiles(SOURCE_ENDINGS, True):
+                replaceSym(x, x.rsplit(".", 1)[0]+".o")
+        else:
+            replaceSym('', outputFile)
+    else:
+        spawn.call([driver] + args.get())
+    spawn.exit(0)
+
+
+## create executable
+if outputFile is None:
+    outputFile = "a.out"
+outObj = mktmp()
+if len(args.getInputFiles(SOURCE_ENDINGS)):
+    spawn.call([sys.argv[0], '-c', '-o', outObj] + args.getCompile())
+args.getInputFiles(SOURCE_ENDINGS, True)
+
+spawn.call([clang, "-O"+opt_level, '-lm', '-lFortranDecimal', '-lFortranRuntime', '-lFortran_main', '-lpgmath',  outObj, "-o", outputFile] + args.getLink())
+rmtmp(outObj)
+spawn.exit(0)

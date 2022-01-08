@@ -1,0 +1,10 @@
+# Flang-new
+
+A driver wrapper for Flang/f18
+
+Enables linking with code which expects gfortran symbols and additional flags which are currently not available in the driver as of writing.
+
+This wrapper uses llc, opt, llvm-nm, llvm-objcopy, and clang alongside flang-new.
+
+
+To use first run `./configure` and use the wrapper script generated at `out/flang`.
