@@ -1,9 +1,10 @@
-def writeEdits(syms, output, us=True):
+def writeEdits(syms, output, us=1):
     def str_sym(sym, underscore):
         if underscore:
-        	return sym + " " + sym[3:] + "_"
-        else:
-                return sym + " " + sym[3:]
+            if underscore == 2 and "_" in sym[3:]:
+                return sym + " " + sym[3:] + "__"
+            return sym + " " + sym[3:] + "_"
+        return sym + " " + sym[3:]
     def is_sym(sym):
         if sym.startswith('_QB') or sym.startswith('_QP'):
             return True

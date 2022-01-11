@@ -38,6 +38,8 @@ if not len(args.getInputFiles(INPUT_ENDINGS)):
 if args.hasFlag("-v"):
     spawn.run_verbose()
 
+spawn.onExit(close_all)
+
 opt_level = "2"
 if args.hasFlag("-O0", True):
     opt_level = "0"
@@ -84,7 +86,12 @@ if toObjectFile:
     if target is None and len(default_triple):
         target = default_triple
 
-    leading_underscore = not args.hasFlag("-fno-leading-underscore", True)
+    args.hasFlag("-funderscoring", True)
+    underscore_mode = 1
+    if args.hasFlag("-fsecond-underscore", True):
+        underscore_mode = 2
+    if args.hasFlag("-fno-underscoring", True):
+        underscore_mode = 0
     
     def modObjFile(path, out):
         if target is None and not isPIC:
@@ -106,7 +113,7 @@ if toObjectFile:
             editpath = mktmp()
             symbols = spawn.stdout([llvm_nm, '-j', out]).split("\n")
             editfile = open(editpath, 'w')
-            writeEdits(symbols, editfile, leading_underscore)
+            writeEdits(symbols, editfile, underscore_mode)
             spawn.call([llvm_objcopy, '--redefine-syms', editpath, out])
             rmtmp(editpath)
         spawn.ondone(cmdid, editSym)

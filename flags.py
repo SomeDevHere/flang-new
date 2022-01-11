@@ -29,15 +29,24 @@ FORTRAN_COMPILE_FLAGS = ('-fall-intrinsics', '-fallow-argument-mismatch', '-fall
     '-fmodule-private', '-ffixed-form', '-fno-range-check', '-fopenacc', '-fopenmp',
     '-freal-4-real-10', '-freal-4-real-16', '-freal-4-real-8', '-freal-8-real-10',
     '-freal-8-real-16', '-freal-8-real-4', '-std=', '-ftest-forall-temp', '-flarge-sizes',
-    '-flogical-abbreviations', '-fxor-operator')
+    '-flogical-abbreviations', '-fxor-operator','-fno-leading-underscore')
 
 COMPILE_FLAGS = FORTRAN_COMPILE_FLAGS
 
 LINK_FLAGS = ('-static', '-static-libgfortran')
 
+ALIAS = {'-openmp':'-fopenmp',
+        '-Mbackslash': '-fbackslash', '-Mfixed':'-ffixed-form', 
+        '-Mfreeform':'-ffree-form', '-Mrecursive':'-frecursive'}
+
 class ParseArg:
     def __init__(self, args):
-        self.args = args
+        self.args = []
+        for x in args:
+            if x in ALIAS:
+                self.args.append(ALIAS[x])
+            else:
+                self.args.append(x)
     def hasFlag(self, flag, remove=False):
         if flag in self.args:
             if remove:
@@ -85,7 +94,7 @@ class ParseArg:
             if x.startswith('-l') or x.startswith('-fuse-ld='):
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during compilation: \""+x+"\"", file=sys.stderr)
-            elif x in LINKER_FLAGS:
+            elif x in LINK_FLAGS:
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during compilation: \""+x+"\"", file=sys.stderr)
             else:

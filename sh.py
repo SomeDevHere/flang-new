@@ -36,6 +36,11 @@ class Spawn_Manager:
         if res.returncode:
             ex(res.returncode)
         return res.stdout.decode("utf-8")
+    def onExit(callback):
+        Spawn_Manager.atExit[-1] = callback
+    def cleanup():
+        if -1 in Spawn_Manager.atExit:
+            Spawn_Manager.atExit[-1]()
     def exit(code):
         for x in Spawn_Manager.process_chains:
             x.run()
@@ -43,9 +48,11 @@ class Spawn_Manager:
             proc = Spawn_Manager.process_chains[i]
             proc.wait()
             if proc.returncode():
+                Spawn_Manager.cleanup()
                 ex(proc.returncode())
             if i in Spawn_Manager.atExit:
                 Spawn_Manager.atExit[i]()
+        Spawn_Manager.cleanup()
         ex(code)
 
 

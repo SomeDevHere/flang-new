@@ -3,7 +3,7 @@ import tempfile
 __tmp_files = {}
 
 def mktmp():
-    tmp = tempfile.NamedTemporaryFile(mode='w',encoding='utf-8', delete=False)
+    tmp = tempfile.NamedTemporaryFile(mode='w',encoding='utf-8')
     __tmp_files[tmp.name] = tmp
     return tmp.name
 
