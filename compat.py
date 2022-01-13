@@ -14,5 +14,5 @@ def writeEdits(syms, output, us=1):
             output.write(str_sym(x, us) + '\n')
     output.close()
 
-def isFortranMain(syms):
+def hasFortranMain(syms):
     return "_QQmain" in syms

@@ -13,7 +13,6 @@ BITCODE_ENDINGS = ('.bc', )
 AR_ENDINGS = ('.a', )
 SHARED_ENDINGS = ('.so', )
 
-
 INPUT_ENDINGS = SOURCE_ENDINGS + OBJ_ENDINGS + BITCODE_ENDINGS + AR_ENDINGS + SHARED_ENDINGS
 
 
@@ -26,23 +25,24 @@ FORTRAN_COMPILE_FLAGS = ('-fall-intrinsics', '-fallow-argument-mismatch', '-fall
     '-ffixed-line-length-n', '-ffixed-line-length-none', '-fpad-source',
     '-ffree-form', '-ffree-line-length-n', '-ffree-line-length-none',
     '-fimplicit-none', '-finteger-4-integer-8', '-fmax-identifier-length',
-    '-fmodule-private', '-ffixed-form', '-fno-range-check', '-fopenacc', '-fopenmp',
+    '-fmodule-private', '-ffixed-form', '-fno-range-check', '-fopenacc',
     '-freal-4-real-10', '-freal-4-real-16', '-freal-4-real-8', '-freal-8-real-10',
     '-freal-8-real-16', '-freal-8-real-4', '-std=', '-ftest-forall-temp', '-flarge-sizes',
-    '-flogical-abbreviations', '-fxor-operator','-fno-leading-underscore')
+    '-flogical-abbreviations', '-fxor-operator','-fno-leading-underscore', '-funderscoring',
+    '-fno-underscoring', '-fsecond-underscore')
 
 COMPILE_FLAGS = FORTRAN_COMPILE_FLAGS
 
-LINK_FLAGS = ('-static', '-static-libgfortran')
+LINK_FLAGS = ('-static', '-static-flang-libs', '-fno-fortran-main', '-noFlangLibs')
 
-ALIAS = {'-openmp':'-fopenmp',
+ALIAS = {'-openmp':'-fopenmp', '-static-libgfortran':'-static-flang-libs',
         '-Mbackslash': '-fbackslash', '-Mfixed':'-ffixed-form', 
         '-Mfreeform':'-ffree-form', '-Mrecursive':'-frecursive'}
 
 class ParseArg:
     def __init__(self, args):
         self.args = []
-        for x in args:
+        for x in args[1:]:
             if x in ALIAS:
                 self.args.append(ALIAS[x])
             else:
@@ -87,10 +87,10 @@ class ParseArg:
                 self.args.remove(x)
         return inputFiles
     def get(self):
-        return self.args[1:]
+        return self.args
     def getCompile(self, warn=False):
         argv = []
-        for x in self.args[1:]:
+        for x in self.args:
             if x.startswith('-l') or x.startswith('-fuse-ld='):
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during compilation: \""+x+"\"", file=sys.stderr)
@@ -102,7 +102,7 @@ class ParseArg:
         return argv
     def getLink(self, warn=False):
         argv = []
-        for x in self.args[1:]:
+        for x in self.args:
             if x in COMPILE_FLAGS:
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during linking: \""+x+"\"", file=sys.stderr)

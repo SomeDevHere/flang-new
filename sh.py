@@ -29,11 +29,16 @@ class Spawn_Manager:
         res = run(args)
         if res.returncode:
             ex(res.returncode)
-    def stdout(args):
+    def stdout(args, ignore_stderr=True, exit_if_fail=True):
         if Spawn_Manager.verbose:
             print(args)
-        res = run(args, stdout=PIPE)
+        if ignore_stderr:
+            res = run(args, stdout=PIPE)
+        else:
+            res = run(args, stdout=PIPE, stderr=PIPE)
         if res.returncode:
+            if not exit_if_fail:
+                return ""
             ex(res.returncode)
         return res.stdout.decode("utf-8")
     def onExit(callback):

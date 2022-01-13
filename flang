@@ -133,10 +133,49 @@ if toObjectFile:
 if outputFile is None:
     outputFile = "a.out"
 outObj = mktmp()
+
+link_mode = True
 if len(args.getInputFiles(SOURCE_ENDINGS)):
     spawn.call([sys.argv[0], '-c', '-o', outObj] + args.getCompile())
+    link_mode = False
 args.getInputFiles(SOURCE_ENDINGS, True)
 
-spawn.call([clang, "-O"+opt_level, '-lm', '-lFortranDecimal', '-lFortranRuntime', '-lFortran_main', '-lpgmath',  outObj, "-o", outputFile] + args.getLink())
+link_cmd = ['-lm']
+
+link_static = args.hasFlag('-static-flang-libs', True)
+
+if link_static:
+    link_cmd.append('-Wl,-Bstatic')
+    link_cmd.append('-lFortranDecimal')
+    link_cmd.append('-Wl,-Bstatic')
+    link_cmd.append('-lFortranRuntime')
+else:
+    link_cmd.append('-lFortranDecimal')
+    link_cmd.append('-lFortranRuntime')
+
+if not args.hasFlag('-fno-fortran-main', True):
+    symbols = spawn.stdout([llvm_nm, '-j', outObj], False, False).split("\n")
+    if hasFortranMain(symbols):
+        if link_static:
+            link_cmd.append('-Wl,-Bstatic')
+        link_cmd.append('-lFortran_main')
+    else: 
+        for x in args.getInputFiles(''): #get all possible inputs for case where main is
+            #in a object that was added during linking
+            sym = spawn.stdout([llvm_nm, '-j', x], False, False).split("\n")
+            if hasFortranMain(sym):
+                if link_static:
+                    link_cmd.append('-Wl,-Bstatic')
+                link_cmd.append('-lFortran_main')
+            break
+
+if link_static:
+    link_cmd.append('-Wl,-Bstatic')
+link_cmd.append('-lpgmath')
+
+if args.hasFlag('-noFlangLibs', True):
+    link_cmd = []
+
+spawn.call([clang, "-O"+opt_level] + link_cmd + [outObj, "-o", outputFile] + args.getLink())
 rmtmp(outObj)
 spawn.exit(0)
