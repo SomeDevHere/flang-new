@@ -35,6 +35,8 @@ COMPILE_FLAGS = FORTRAN_COMPILE_FLAGS
 
 LINK_FLAGS = ('-static', '-static-flang-libs', '-fno-fortran-main', '-noFlangLibs')
 
+IGNORE_FLAGS = ('-Kieee')
+
 ALIAS = {'-openmp':'-fopenmp', '-static-libgfortran':'-static-flang-libs',
         '-Mbackslash': '-fbackslash', '-Mfixed':'-ffixed-form', 
         '-Mfreeform':'-ffree-form', '-Mrecursive':'-frecursive'}
@@ -97,7 +99,7 @@ class ParseArg:
             elif x in LINK_FLAGS:
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during compilation: \""+x+"\"", file=sys.stderr)
-            else:
+            elif not x in IGNORE_FLAGS:
                 argv.append(x)
         return argv
     def getLink(self, warn=False):
@@ -106,6 +108,6 @@ class ParseArg:
             if x in COMPILE_FLAGS:
                 if warn:
                     print(sys.argv[0]+": warning: argument unused during linking: \""+x+"\"", file=sys.stderr)
-            else:
+            elif not x in IGNORE_FLAGS:
                 argv.append(x)
         return argv

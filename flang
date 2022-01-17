@@ -95,8 +95,8 @@ if toObjectFile:
     
     def modObjFile(path, out):
         if target is None and not isPIC:
-            return spawn.create([driver, '-o', out] + args.get())
-        cmdid = spawn.create([driver] + args.get() + [path, '-c', '-Xflang', '-emit-llvm', '-o', '/dev/fd/1'])
+            return spawn.create([driver, '-o', out] + args.getCompile(True))
+        cmdid = spawn.create([driver] + args.getCompile(True) + [path, '-c', '-Xflang', '-emit-llvm', '-o', '/dev/fd/1'])
         if not opt_level == '0':
             spawn.append(cmdid, [opt, '-', '-O'+opt_level])
         llcFlags = []
@@ -125,7 +125,7 @@ if toObjectFile:
         else:
             replaceSym('', outputFile)
     else:
-        spawn.call([driver] + args.get())
+        spawn.call([driver] + args.getCompile(True))
     spawn.exit(0)
 
 
