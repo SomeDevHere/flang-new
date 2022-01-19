@@ -10,7 +10,6 @@ class Configure:
     def __init__(self, description, delim=('@','@'), search_path=[]):
         self.argParse = ArgumentParser(description=description,
                 usage='\n %(prog)s [VAR=VALUE]')
-        self.argParse #TODO add help and version?
         self.argParse.add_argument("--out", nargs=1, help="Configure output path", default=None)
         self.delim = delim
         self.flags = []
@@ -114,5 +113,8 @@ conf.add_opt('opt-path', '', path_pre=('sysroot','opt'))
 conf.add_opt('llvm-nm-path', '', path_pre=('sysroot','llvm-nm'))
 conf.add_opt('llvm-objcopy-path', '', path_pre=('sysroot','llvm-objcopy'))
 conf.add_bool('fpic-default', 'Whether -fpic is applied on output by default', default=True)
+conf.add_opt('tool-lib', 'Path to components of the various tools', default='/lib')
 
-conf.apply_file(os.path.join(cur_dir,'flang'), 'out', 'flang')
+conf.apply_file(os.path.join(cur_dir,'flang'), 'out', 'bin/flang')
+conf.apply_file(os.path.join(cur_dir,'tools/flang_numpy_setup'), 'out', 'bin/flang_numpy_setup')
+conf.apply_file(os.path.join(cur_dir,'tools/numpy_distutils_fcompiler_flang_llvm.py'), 'out', 'lib/numpy_distutils_fcompiler_flang_llvm.py')

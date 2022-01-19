@@ -1,0 +1,35 @@
+#! /usr/bin/env python3
+
+from shutil import copyfile
+import os.path as path
+import sys
+
+
+tool_lib = "@tool-lib@"
+
+def install(install_dir):
+    if not path.isdir(path.join(install_dir,'numpy')):
+        print("Numpy not installed at '"+ install_dir +"'", file=sys.stderr)
+        return False
+    compiler_file=path.join(tool_lib,"numpy_distutils_fcompiler_flang_llvm.py")
+    dest=path.join(install_dir,'numpy/distutils/fcompiler/flang_llvm.py')
+    copyfile(compiler_file, dest)
+    '''record = [i for i in os.listdir() if i.startswith("numpy-")]
+    if len(record) != 1: #TODO enable adding to RECORD
+        return #not sure what to do if there are multiple installations of numpy
+    with open[path.join(record[0], 'RECORD')] as rec:
+        rec.write'''
+    return True
+
+def get_site():
+    version = str(sys.version_info.major) + "." + str(sys.version_info.minor)
+    return path.join(sys.prefix, 'lib/python' + version, 'site_packages')
+
+
+
+if __name__ == '__main__':
+    if install(get_site()):
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
