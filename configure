@@ -117,4 +117,4 @@ conf.add_opt('tool-lib', 'Path to components of the various tools', default='/li
 
 conf.apply_file(os.path.join(cur_dir,'flang'), 'out', 'bin/flang')
 conf.apply_file(os.path.join(cur_dir,'tools/flang_numpy_setup'), 'out', 'bin/flang_numpy_setup')
-conf.apply_file(os.path.join(cur_dir,'tools/numpy_distutils_fcompiler_flang_llvm.py'), 'out', 'lib/numpy_distutils_fcompiler_flang_llvm.py')
+conf.apply_file(os.path.join(cur_dir,'tools/numpy_distutils_fcompiler_flang_llvm.py'), 'out', 'lib/flang-new/numpy_distutils_fcompiler_flang_llvm.py')

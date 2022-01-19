@@ -23,7 +23,7 @@ def install(install_dir):
 
 def get_site():
     version = str(sys.version_info.major) + "." + str(sys.version_info.minor)
-    return path.join(sys.prefix, 'lib/python' + version, 'site_packages')
+    return path.join(sys.prefix, 'lib/python' + version, 'site-packages')
 
 
 
